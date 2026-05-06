@@ -23,6 +23,7 @@
 		confirmed = true;
 		confirmDialogOpen = false;
 		form.requestSubmit();
+		confirmed = false;
 	}
 </script>
 
