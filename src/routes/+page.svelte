@@ -32,11 +32,12 @@
 		class="mx-auto w-full max-w-xl space-y-4 border bg-card p-4"
 		bind:this={form}
 		onsubmit={handleSubmit}
+		method="POST"
 	>
 		<h1 class="text-lg font-semibold">pager</h1>
-		<Input required placeholder="short description*" />
-		<Textarea placeholder="more details"></Textarea>
-		<RadioGroup.Root required value="low">
+		<Input required placeholder="short description*" name="description" />
+		<Textarea placeholder="more details" name="details"></Textarea>
+		<RadioGroup.Root required value="low" name="priority">
 			<div class="flex items-center space-x-2">
 				<RadioGroup.Item value="low" id="low" />
 				<Label for="low">Low priority</Label>
