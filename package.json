@@ -45,7 +45,9 @@
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
+		"@types/pg": "^8.20.0",
 		"better-auth": "^1.6.9",
-		"mode-watcher": "^1.1.0"
+		"mode-watcher": "^1.1.0",
+		"pg": "^8.20.0"
 	}
 }
