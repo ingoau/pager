@@ -9,7 +9,7 @@
 
 	let form: HTMLFormElement;
 
-	let confirmDialogOpen = $state(true);
+	let confirmDialogOpen = $state(false);
 	let confirmed = $state(false);
 
 	function handleSubmit(event: SubmitEvent) {
@@ -21,6 +21,7 @@
 
 	function confirmSubmit() {
 		confirmed = true;
+		confirmDialogOpen = false;
 		form.requestSubmit();
 	}
 </script>
@@ -63,7 +64,7 @@
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>cancel</AlertDialog.Cancel>
-			<AlertDialog.Action>continue</AlertDialog.Action>
+			<AlertDialog.Action onclick={confirmSubmit}>continue</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
