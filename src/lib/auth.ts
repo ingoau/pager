@@ -1,5 +1,6 @@
 import { getRequestEvent } from '$app/server';
 import { betterAuth } from 'better-auth';
+import { passkey } from '@better-auth/passkey';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { Pool } from 'pg';
 
@@ -11,6 +12,7 @@ export const auth = betterAuth({
 		}
 	}),
 	plugins: [
+		passkey(),
 		sveltekitCookies(getRequestEvent) // make sure this is at the end
 	]
 });
