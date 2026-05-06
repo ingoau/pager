@@ -6,6 +6,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { CheckIcon, WarningIcon, XIcon } from 'phosphor-svelte';
+	import { enhance } from '$app/forms';
 
 	let formElement: HTMLFormElement;
 
@@ -44,7 +45,18 @@
 				</div>
 			{/if}
 		{:else}
-			<form class="space-y-4" bind:this={formElement} onsubmit={handleSubmit} method="POST">
+			<form
+				class="space-y-4"
+				bind:this={formElement}
+				onsubmit={handleSubmit}
+				method="POST"
+				use:enhance={({ cancel }) => {
+					if (!confirmed) {
+						cancel();
+						confirmDialogOpen = true;
+					}
+				}}
+			>
 				<h1 class="text-lg font-semibold">pager</h1>
 				<Input required placeholder="short description*" name="description" autofocus />
 				<Textarea placeholder="more details" name="details"></Textarea>
