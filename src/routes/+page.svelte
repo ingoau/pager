@@ -4,14 +4,18 @@
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
+	import { WarningIcon } from 'phosphor-svelte';
 
 	let form: HTMLFormElement;
 
+	let confirmDialogOpen = $state(true);
 	let confirmed = $state(false);
 
 	function handleSubmit(event: SubmitEvent) {
 		if (!confirmed) {
 			event.preventDefault();
+			confirmDialogOpen = true;
 		}
 	}
 
@@ -43,3 +47,23 @@
 		<Button type="submit">Submit</Button>
 	</form>
 </div>
+
+<AlertDialog.Root bind:open={confirmDialogOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<WarningIcon class="size-8" />
+			<AlertDialog.Title>are you sure?</AlertDialog.Title>
+			<AlertDialog.Description>
+				is this actually something important? do i really need to be notified about this now? could
+				you just dm me?
+				<br />
+				<br />
+				(any misuse may result in you being banned from this service)
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel>cancel</AlertDialog.Cancel>
+			<AlertDialog.Action>continue</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
