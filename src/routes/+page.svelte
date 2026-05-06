@@ -5,7 +5,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
-	import { WarningIcon } from 'phosphor-svelte';
+	import { CheckIcon, WarningIcon, XIcon } from 'phosphor-svelte';
 
 	let formElement: HTMLFormElement;
 
@@ -33,9 +33,15 @@
 	<div class="mx-auto w-full max-w-xl border bg-card p-4">
 		{#if form}
 			{#if form.success}
-				<p>Success!</p>
+				<div class="flex flex-row items-center gap-2">
+					<CheckIcon class="size-6" />
+					<p>submitted</p>
+				</div>
 			{:else if !form.success}
-				<p>Something went wrong</p>
+				<div class="flex flex-row items-center gap-2">
+					<XIcon class="size-6" />
+					<p>something went wrong</p>
+				</div>
 			{/if}
 		{:else}
 			<form class="space-y-4" bind:this={formElement} onsubmit={handleSubmit} method="POST">
