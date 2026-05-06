@@ -29,58 +29,51 @@
 	}
 </script>
 
-{#if form}
-	{#if form.success}
-		<div class="w-full p-4">
-			<p>Success!</p>
-		</div>
-	{:else if !form.success}
-		<div class="w-full p-4">
-			<p>Something went wrong</p>
-		</div>
-	{/if}
-{:else}
-	<div class="w-full p-4">
-		<form
-			class="mx-auto w-full max-w-xl space-y-4 border bg-card p-4"
-			bind:this={formElement}
-			onsubmit={handleSubmit}
-			method="POST"
-		>
-			<h1 class="text-lg font-semibold">pager</h1>
-			<Input required placeholder="short description*" name="description" />
-			<Textarea placeholder="more details" name="details"></Textarea>
-			<RadioGroup.Root required value="low" name="priority">
-				<div class="flex items-center space-x-2">
-					<RadioGroup.Item value="low" id="low" />
-					<Label for="low">Low priority</Label>
-				</div>
-				<div class="flex items-center space-x-2">
-					<RadioGroup.Item value="high" id="high" />
-					<Label for="high">High priority</Label>
-				</div>
-			</RadioGroup.Root>
-			<Button type="submit">Submit</Button>
-		</form>
+<div class="w-full p-4">
+	<div class="mx-auto w-full max-w-xl border bg-card p-4">
+		{#if form}
+			{#if form.success}
+				<p>Success!</p>
+			{:else if !form.success}
+				<p>Something went wrong</p>
+			{/if}
+		{:else}
+			<form class="space-y-4" bind:this={formElement} onsubmit={handleSubmit} method="POST">
+				<h1 class="text-lg font-semibold">pager</h1>
+				<Input required placeholder="short description*" name="description" />
+				<Textarea placeholder="more details" name="details"></Textarea>
+				<RadioGroup.Root required value="low" name="priority">
+					<div class="flex items-center space-x-2">
+						<RadioGroup.Item value="low" id="low" />
+						<Label for="low">Low priority</Label>
+					</div>
+					<div class="flex items-center space-x-2">
+						<RadioGroup.Item value="high" id="high" />
+						<Label for="high">High priority</Label>
+					</div>
+				</RadioGroup.Root>
+				<Button type="submit">Submit</Button>
+			</form>
+		{/if}
 	</div>
+</div>
 
-	<AlertDialog.Root bind:open={confirmDialogOpen}>
-		<AlertDialog.Content>
-			<AlertDialog.Header>
-				<WarningIcon class="size-8" />
-				<AlertDialog.Title>are you sure?</AlertDialog.Title>
-				<AlertDialog.Description>
-					is this actually something important? do i really need to be notified about this now?
-					could you just dm me?
-					<br />
-					<br />
-					(any misuse may result in you being banned from this service)
-				</AlertDialog.Description>
-			</AlertDialog.Header>
-			<AlertDialog.Footer>
-				<AlertDialog.Cancel>cancel</AlertDialog.Cancel>
-				<AlertDialog.Action onclick={confirmSubmit}>continue</AlertDialog.Action>
-			</AlertDialog.Footer>
-		</AlertDialog.Content>
-	</AlertDialog.Root>
-{/if}
+<AlertDialog.Root bind:open={confirmDialogOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<WarningIcon class="size-8" />
+			<AlertDialog.Title>are you sure?</AlertDialog.Title>
+			<AlertDialog.Description>
+				is this actually something important? do i really need to be notified about this now? could
+				you just dm me?
+				<br />
+				<br />
+				(any misuse may result in you being banned from this service)
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel>cancel</AlertDialog.Cancel>
+			<AlertDialog.Action onclick={confirmSubmit}>continue</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
