@@ -46,7 +46,7 @@
 		{:else}
 			<form class="space-y-4" bind:this={formElement} onsubmit={handleSubmit} method="POST">
 				<h1 class="text-lg font-semibold">pager</h1>
-				<Input required placeholder="short description*" name="description" />
+				<Input required placeholder="short description*" name="description" autofocus />
 				<Textarea placeholder="more details" name="details"></Textarea>
 				<RadioGroup.Root required value="low" name="priority">
 					<div class="flex items-center space-x-2">
