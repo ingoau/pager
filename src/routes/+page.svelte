@@ -6,10 +6,27 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 
 	let form: HTMLFormElement;
+
+	let confirmed = $state(false);
+
+	function handleSubmit(event: SubmitEvent) {
+		if (!confirmed) {
+			event.preventDefault();
+		}
+	}
+
+	function confirmSubmit() {
+		confirmed = true;
+		form.requestSubmit();
+	}
 </script>
 
 <div class="w-full p-4">
-	<form class="mx-auto w-full max-w-xl space-y-4 border bg-card p-4" bind:this={form}>
+	<form
+		class="mx-auto w-full max-w-xl space-y-4 border bg-card p-4"
+		bind:this={form}
+		onsubmit={handleSubmit}
+	>
 		<h1 class="text-lg font-semibold">pager</h1>
 		<Input required placeholder="short description*" />
 		<Textarea placeholder="more details"></Textarea>
