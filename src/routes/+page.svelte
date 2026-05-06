@@ -4,10 +4,12 @@
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+
+	let form: HTMLFormElement;
 </script>
 
 <div class="w-full p-4">
-	<form class="mx-auto w-full max-w-xl space-y-4 border bg-card p-4">
+	<form class="mx-auto w-full max-w-xl space-y-4 border bg-card p-4" bind:this={form}>
 		<h1 class="text-lg font-semibold">pager</h1>
 		<Input required placeholder="short description*" />
 		<Textarea placeholder="more details"></Textarea>
