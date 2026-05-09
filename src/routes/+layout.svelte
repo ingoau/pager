@@ -9,5 +9,9 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 <ModeWatcher />
-<Toaster />
+<Toaster
+	toastOptions={{
+		style: 'border-radius: 0;'
+	}}
+/>
 {@render children()}
