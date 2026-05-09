@@ -8,7 +8,7 @@
 	import { CheckIcon, WarningIcon, XIcon } from 'phosphor-svelte';
 	import { enhance } from '$app/forms';
 
-	let formElement: HTMLFormElement;
+	let formElement = $state<HTMLFormElement | null>(null);
 
 	let confirmDialogOpen = $state(false);
 	let confirmed = $state(false);
@@ -25,7 +25,7 @@
 	function confirmSubmit() {
 		confirmed = true;
 		confirmDialogOpen = false;
-		formElement.requestSubmit();
+		formElement?.requestSubmit();
 		confirmed = false;
 	}
 </script>
