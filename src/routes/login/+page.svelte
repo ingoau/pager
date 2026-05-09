@@ -3,6 +3,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { FingerprintSimpleIcon } from 'phosphor-svelte';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	let authenticating = $state(false);
 
@@ -10,7 +11,7 @@
 		authenticating = true;
 		const { error } = await authClient.signIn.passkey();
 		if (error) {
-			// TODO: show error
+			toast.error(error.message || 'Something went wrong');
 		}
 		authenticating = false;
 	}
