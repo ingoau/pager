@@ -3,7 +3,10 @@ import { PAGERDUTY_KEY, PAGERDUTY_SERVICE } from '$env/static/private';
 
 export const actions = {
 	default: async (event) => {
-		console.log(event);
+		const formData = await event.request.formData();
+		const description = formData.get('description')?.toString();
+		const details = formData.get('details')?.toString();
+		const priority = formData.get('priority')?.toString() as 'low' | 'high';
 
 		const url = 'https://api.pagerduty.com/incidents';
 		const options = {
@@ -17,12 +20,12 @@ export const actions = {
 			body: JSON.stringify({
 				incident: {
 					type: 'incident',
-					title: 'The server is on fire.',
+					title: description ?? 'No description provided',
 					service: { id: PAGERDUTY_SERVICE, type: 'service_reference' },
-					urgency: 'high',
+					urgency: priority,
 					body: {
 						type: 'incident_body',
-						details: 'Cheese'
+						details: details ?? 'No details provided'
 					}
 				}
 			})
