@@ -4,12 +4,13 @@
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { CheckIcon, WarningIcon, XIcon } from 'phosphor-svelte';
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 
 	let formElement = $state<HTMLFormElement | null>(null);
 
 	let confirmDialogOpen = $state(false);
 	let confirmed = $state(false);
+	let loading = $state(false);
 
 	const { form } = $props();
 
@@ -22,7 +23,6 @@
 
 	function confirmSubmit() {
 		confirmed = true;
-		confirmDialogOpen = false;
 		formElement?.requestSubmit();
 		confirmed = false;
 	}
@@ -49,10 +49,17 @@
 				onsubmit={handleSubmit}
 				method="POST"
 				use:enhance={({ cancel }) => {
-					if (!confirmed) {
+					if (confirmed) {
+						loading = true;
+					} else {
 						cancel();
 						confirmDialogOpen = true;
 					}
+					return async ({ result }) => {
+						await applyAction(result);
+						confirmDialogOpen = false;
+						loading = false;
+					};
 				}}
 			>
 				<h1 class="text-lg font-semibold">pager</h1>
@@ -78,8 +85,8 @@
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel>cancel</AlertDialog.Cancel>
-			<AlertDialog.Action onclick={confirmSubmit}>continue</AlertDialog.Action>
+			<AlertDialog.Cancel disabled={loading}>cancel</AlertDialog.Cancel>
+			<AlertDialog.Action onclick={confirmSubmit} disabled={loading}>continue</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
