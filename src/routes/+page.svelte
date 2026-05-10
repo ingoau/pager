@@ -5,6 +5,7 @@
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { CheckIcon, WarningIcon, XIcon } from 'phosphor-svelte';
 	import { applyAction, enhance } from '$app/forms';
+	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
 
 	let formElement = $state<HTMLFormElement | null>(null);
 
@@ -86,7 +87,14 @@
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel disabled={loading}>cancel</AlertDialog.Cancel>
-			<AlertDialog.Action onclick={confirmSubmit} disabled={loading}>continue</AlertDialog.Action>
+			<AlertDialog.Action onclick={confirmSubmit} disabled={loading}>
+				{#if loading}
+					<Spinner />
+				{:else}
+					<CheckIcon />
+				{/if}
+				continue
+			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
