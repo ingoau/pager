@@ -15,3 +15,8 @@
 	}}
 />
 {@render children()}
+
+<footer class="px-4 text-center text-xs text-muted-foreground">
+	<a href="https://gitlab.com/ingowolf/pager" target="_blank" class="hover:underline">source code</a
+	>
+</footer>
