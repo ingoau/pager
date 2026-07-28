@@ -6,6 +6,7 @@ export const actions = {
 		const formData = await event.request.formData();
 		const description = formData.get('description')?.toString();
 		const details = formData.get('details')?.toString();
+		const priority = formData.get('priority')?.toString();
 
 		const url = 'https://api.pagerduty.com/incidents';
 		const options = {
@@ -21,6 +22,7 @@ export const actions = {
 					type: 'incident',
 					title: description ?? 'No description provided',
 					service: { id: PAGERDUTY_SERVICE, type: 'service_reference' },
+					urgency: priority ?? 'low',
 					body: {
 						type: 'incident_body',
 						details: details ?? 'No details provided'

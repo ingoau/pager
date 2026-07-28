@@ -6,6 +6,8 @@
 	import { CheckIcon, WarningIcon, XIcon } from 'phosphor-svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
+	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 
 	let formElement = $state<HTMLFormElement | null>(null);
 
@@ -66,6 +68,16 @@
 				<h1 class="text-lg font-semibold">pager</h1>
 				<Input required placeholder="short description*" name="description" autofocus />
 				<Textarea placeholder="more details" name="details"></Textarea>
+				<RadioGroup.Root required value="low" name="priority">
+					<div class="flex items-center space-x-2">
+						<RadioGroup.Item value="low" id="low" />
+						<Label for="low">Low priority</Label>
+					</div>
+					<div class="flex items-center space-x-2">
+						<RadioGroup.Item value="high" id="high" />
+						<Label for="high">High priority</Label>
+					</div>
+				</RadioGroup.Root>
 				<Button type="submit">Submit</Button>
 			</form>
 		{/if}
