@@ -15,7 +15,7 @@ export const actions = {
 		// hooks.server.ts already guards this route; this is the backstop that
 		// keeps the action itself from ever being the weak point.
 		if (!user || user.status !== 'approved') {
-			return fail(401, { error: 'You are not allowed to send pages.' });
+			return fail(401, { error: 'Not allowed.' });
 		}
 
 		const formData = await request.formData();
@@ -24,7 +24,7 @@ export const actions = {
 		const requested = formData.get('priority')?.toString() ?? 'low';
 
 		if (!title) {
-			return fail(400, { error: 'A short description is required.' });
+			return fail(400, { error: 'A description is required.' });
 		}
 
 		if (!isUrgency(requested)) {

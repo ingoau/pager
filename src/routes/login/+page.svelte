@@ -40,7 +40,7 @@
 			passkey
 		</Button>
 		<p class="mt-2 text-xs text-muted-foreground">
-			no account? <a href={resolve('/register')} class="underline">request access</a>
+			or <a href={resolve('/register')} class="underline">request access</a>
 		</p>
 	</div>
 </div>

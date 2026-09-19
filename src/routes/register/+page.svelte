@@ -55,15 +55,11 @@
 			{#if data.firstUser}
 				<div class="flex flex-row items-start gap-2 border p-2 text-sm">
 					<CrownSimpleIcon class="mt-0.5 size-4 shrink-0" />
-					<p>
-						no accounts exist yet, so this first registration becomes the admin and is approved
-						straight away.
-					</p>
+					<p>first registration — you'll be the admin.</p>
 				</div>
 			{:else}
 				<p class="text-sm text-muted-foreground">
-					register a passkey and your request goes to the admin. you can't page anyone until it's
-					approved.
+					the admin has to approve you before you can page.
 				</p>
 			{/if}
 
@@ -83,7 +79,7 @@
 				/>
 			</div>
 			<div class="space-y-1">
-				<Label for="reason">why do you need to reach me?</Label>
+				<Label for="reason">why?</Label>
 				<Textarea id="reason" maxlength={500} bind:value={reason}></Textarea>
 			</div>
 
@@ -94,7 +90,7 @@
 				register passkey
 			</Button>
 			<p class="text-xs text-muted-foreground">
-				already registered? <a href={resolve('/login')} class="underline">sign in</a>
+				or <a href={resolve('/login')} class="underline">sign in</a>
 			</p>
 		</form>
 	</div>

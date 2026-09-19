@@ -39,7 +39,7 @@ async function target(locals: App.Locals, request: Request) {
 	if (id === admin.id) {
 		// Without this an admin could approve-flip or delete themselves and lock
 		// everyone out of the panel.
-		return { error: fail(400, { error: "You can't do that to your own account." }) } as const;
+		return { error: fail(400, { error: 'Not on your own account.' }) } as const;
 	}
 
 	const user = await getUser(id);

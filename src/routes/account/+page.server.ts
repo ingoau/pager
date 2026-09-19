@@ -45,7 +45,7 @@ export const actions = {
 		if (passkeys.length <= 1) {
 			// Removing the last one would lock the account out permanently, since
 			// passkeys are the only credential type here.
-			return fail(400, { error: 'You need at least one passkey to sign in.' });
+			return fail(400, { error: 'You need at least one passkey.' });
 		}
 
 		await auth.api.deletePasskey({ headers: request.headers, body: { id } });

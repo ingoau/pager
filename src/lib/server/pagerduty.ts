@@ -65,7 +65,7 @@ export async function triggerIncident(input: {
 	const incidentId = payload?.incident?.id;
 	if (typeof incidentId !== 'string') {
 		console.error('[pagerduty] unexpected response shape', payload);
-		return { ok: false, error: 'PagerDuty returned an unexpected response.' };
+		return { ok: false, error: 'Unexpected response from PagerDuty.' };
 	}
 
 	return { ok: true, incidentId };

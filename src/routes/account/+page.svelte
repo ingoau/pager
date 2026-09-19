@@ -44,7 +44,7 @@
 		<div>
 			<h1 class="text-lg font-semibold">account</h1>
 			<p class="text-sm text-muted-foreground">
-				high priority pages: {data.allowHigh ? 'allowed' : 'not allowed'}
+				high priority: {data.allowHigh ? 'allowed' : 'not allowed'}
 			</p>
 		</div>
 
@@ -52,9 +52,7 @@
 
 		<div class="space-y-2">
 			<h2 class="font-medium">passkeys</h2>
-			<p class="text-xs text-muted-foreground">
-				add one per device so you don't get locked out if you lose one.
-			</p>
+			<p class="text-xs text-muted-foreground">one per device, so you don't get locked out.</p>
 
 			{#if form?.error}
 				<p class="border border-destructive p-2 text-sm">{form.error}</p>
@@ -93,7 +91,7 @@
 			<div class="flex items-center gap-2">
 				<Input
 					bind:value={newPasskeyName}
-					placeholder="name for the new passkey (optional)"
+					placeholder="name (optional)"
 					maxlength={60}
 					class="h-8"
 				/>

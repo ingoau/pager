@@ -20,13 +20,13 @@ function bad(message: string): never {
 }
 
 function parseAccessRequest(raw: string | null | undefined): AccessRequest {
-	if (!raw) bad('Tell us who you are before registering a passkey.');
+	if (!raw) bad('Missing registration details.');
 
 	let parsed: unknown;
 	try {
 		parsed = JSON.parse(raw);
 	} catch {
-		bad('Malformed registration request.');
+		bad('Malformed request.');
 	}
 
 	const { name, email, reason } = (parsed ?? {}) as Record<string, unknown>;
@@ -38,7 +38,7 @@ function parseAccessRequest(raw: string | null | undefined): AccessRequest {
 	// Deliberately loose: nothing is emailed, the address is only an identifier
 	// the admin recognises when approving.
 	if (!/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(cleanEmail) || cleanEmail.length > 200) {
-		bad('A valid email address is required.');
+		bad('A valid email is required.');
 	}
 	if (cleanReason.length > 500) bad('Reason is too long.');
 
@@ -144,9 +144,7 @@ export function createAuthOptions(env: AuthEnv, extraPlugins: BetterAuthPlugin[]
 							where: [{ field: 'email', value: request.email }]
 						});
 						if (existing) {
-							bad(
-								'That email already has an account. Sign in with your existing passkey, then add another from your account page.'
-							);
+							bad('That email already has an account — sign in and add a passkey there.');
 						}
 
 						return {
