@@ -61,6 +61,25 @@ The schema comes from the better-auth config in
 `src/lib/server/auth-options.ts`, which the app and the migration script share,
 so the two can't drift. Re-run the migration after changing any field there.
 
+## Upgrading an existing deployment
+
+`bun run db:migrate` adds `status`, `role`, `allowHigh` and `reason` to the
+existing `user` table. Rows that predate the migration get `NULL` for all of
+them, and the guards fail closed — so **any account that already exists will be
+locked out**, including yours, and no admin will exist to approve it.
+
+The first-registration bootstrap won't help either, since the user table isn't
+empty. Promote yourself directly once, right after migrating:
+
+```sql
+update "user"
+set status = 'approved', role = 'admin', "allowHigh" = true
+where email = 'you@example.com';
+```
+
+Anyone else already in the table stays pending until you approve them in the
+admin panel.
+
 ## Environment
 
 See `.env.example`. `PAGERDUTY_FROM` in particular must be the login email of a
