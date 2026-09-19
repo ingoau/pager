@@ -64,6 +64,36 @@ export async function deleteUser(id: string): Promise<void> {
 	await ctx.internalAdapter.deleteUser(id);
 }
 
+export type SessionRow = {
+	id: string;
+	token: string;
+	userId: string;
+	createdAt: Date;
+	expiresAt: Date;
+	ipAddress?: string | null;
+	userAgent?: string | null;
+};
+
+/** Every session that hasn't expired yet, across all users, newest first. */
+export async function listActiveSessions(): Promise<SessionRow[]> {
+	return await (
+		await adapter()
+	).findMany<SessionRow>({
+		model: 'session',
+		where: [{ field: 'expiresAt', operator: 'gt', value: new Date() }],
+		sortBy: { field: 'createdAt', direction: 'desc' }
+	});
+}
+
+/**
+ * Revoke one session by its token, whoever it belongs to. Admin-only — the
+ * account page uses better-auth's own endpoint, which is scoped to the caller.
+ */
+export async function revokeSessionByToken(token: string): Promise<void> {
+	const ctx = await auth.$context;
+	await ctx.internalAdapter.deleteSession(token);
+}
+
 /** Drop every session a user holds, so a revoked account loses access at once. */
 export async function revokeSessions(id: string): Promise<void> {
 	const ctx = await auth.$context;

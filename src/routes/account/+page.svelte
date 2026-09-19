@@ -8,6 +8,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { FingerprintSimpleIcon, PlusIcon, TrashIcon } from 'phosphor-svelte';
+	import SessionList from '$lib/components/session-list.svelte';
 
 	const { data, form } = $props();
 
@@ -106,6 +107,14 @@
 					add
 				</Button>
 			</div>
+		</div>
+
+		<Separator />
+
+		<div class="space-y-2">
+			<h2 class="font-medium">sessions</h2>
+			<p class="text-xs text-muted-foreground">revoke anything you don't recognise</p>
+			<SessionList sessions={data.sessions} action="?/revokeSession" />
 		</div>
 	</div>
 </div>

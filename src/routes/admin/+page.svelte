@@ -3,6 +3,7 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { enhance } from '$app/forms';
 	import { CheckIcon, ProhibitIcon, TrashIcon, XIcon } from 'phosphor-svelte';
+	import SessionList from '$lib/components/session-list.svelte';
 
 	const { data, form } = $props();
 
@@ -60,6 +61,11 @@
 							{#if user.allowHigh}
 								<span class="border px-1.5 py-0.5 text-xs uppercase">high priority</span>
 							{/if}
+							{#if user.sessions.length > 0}
+								<span class="border px-1.5 py-0.5 text-xs uppercase">
+									{user.sessions.length} session{user.sessions.length === 1 ? '' : 's'}
+								</span>
+							{/if}
 							<span class="ml-auto text-xs text-muted-foreground">
 								{dateFormat.format(new Date(user.createdAt))}
 							</span>
@@ -69,7 +75,7 @@
 							<p class="text-sm text-muted-foreground">“{user.reason}”</p>
 						{/if}
 
-						{#if user.role === 'admin'}
+						{#if user.id === data.user?.id}
 							<p class="text-xs text-muted-foreground">that's you.</p>
 						{:else}
 							<div class="flex flex-wrap gap-2">
@@ -102,6 +108,10 @@
 									</Button>
 								</form>
 							</div>
+						{/if}
+
+						{#if user.sessions.length > 0}
+							<SessionList sessions={user.sessions} action="?/revokeSession" />
 						{/if}
 					</li>
 				{:else}

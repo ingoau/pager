@@ -1,10 +1,12 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import {
 	deleteUser,
 	getUser,
+	listActiveSessions,
 	listPageLog,
 	listUsers,
+	revokeSessionByToken,
 	revokeSessions,
 	updateUser
 } from '$lib/server/store';
@@ -24,9 +26,38 @@ function requireAdmin(locals: App.Locals) {
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
 
-	const [users, log] = await Promise.all([listUsers(), listPageLog(100)]);
+	const [users, log, sessions] = await Promise.all([
+		listUsers(),
+		listPageLog(100),
+		listActiveSessions()
+	]);
 
-	return { users, log };
+	const currentToken = locals.session?.token;
+
+	// Sessions hang off the user they belong to rather than forming their own
+	// list, so the admin sees them next to the account they'd act on.
+	const byUser = new Map<string, typeof sessions>();
+	for (const session of sessions) {
+		const existing = byUser.get(session.userId);
+		if (existing) existing.push(session);
+		else byUser.set(session.userId, [session]);
+	}
+
+	return {
+		log,
+		users: users.map((user) => ({
+			...user,
+			sessions: (byUser.get(user.id) ?? []).map((session) => ({
+				id: session.id,
+				token: session.token,
+				createdAt: session.createdAt,
+				expiresAt: session.expiresAt,
+				ipAddress: session.ipAddress ?? null,
+				userAgent: session.userAgent ?? null,
+				current: session.token === currentToken
+			}))
+		}))
+	};
 };
 
 /** Shared preamble: check admin, read the target id, refuse self-targeting. */
@@ -76,6 +107,21 @@ export const actions = {
 		return {
 			success: `${allowHigh ? 'Granted' : 'Revoked'} high priority for ${result.user.email}.`
 		};
+	},
+
+	revokeSession: async ({ locals, request }) => {
+		requireAdmin(locals);
+
+		const formData = await request.formData();
+		const token = formData.get('token')?.toString() ?? '';
+		if (!token) return fail(400, { error: 'Missing session.' });
+
+		await revokeSessionByToken(token);
+
+		// Admins can revoke their own session here too; that signs them out.
+		if (token === locals.session?.token) redirect(302, '/login');
+
+		return { success: 'Session revoked.' };
 	},
 
 	remove: async ({ locals, request }) => {
