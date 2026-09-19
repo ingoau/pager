@@ -10,11 +10,35 @@ passkey auth, with an admin panel for deciding who's allowed to use it.
 - **The first account ever registered becomes the admin** and is approved
   immediately. Every registration after that lands in a pending state and can't
   send anything until the admin approves it.
+- An admin can also create a user directly from the admin panel and hand them a
+  one-time login code instead.
 - Approved users can send pages. Low priority is available to everyone; high
   priority is a per-user permission the admin grants.
-- Users can register several passkeys (one per device) from `/account`, so
-  losing a device doesn't lock them out. The last remaining passkey can't be
-  deleted.
+
+There is no second class of account. However a user got in, they can add
+passkeys from `/account`, redeem a login code, and link new devices. The last
+remaining passkey can't be deleted.
+
+## Signing in
+
+Three ways, all landing on the same kind of session:
+
+- **Passkey** — the default at `/login`.
+- **Login code** — the admin issues one from the admin panel and reads it out.
+  Codes are 60 bits of randomness, stored only as a SHA-256 hash, valid for 15
+  minutes, and single use. Issuing a new one invalidates the previous. This is
+  how a new account gets in before it has a passkey, and how someone who lost
+  their only device recovers.
+- **Another device** — a signed-out device gets a code at `/link` and displays
+  it; you approve that code from `/account` on a device you're already signed in
+  on, and the waiting device gets a session as you. This is better-auth's
+  device-authorization plugin (RFC 8628). It answers with a Bearer token rather
+  than a cookie, so a small `after` hook turns the session it creates into a
+  real session cookie.
+
+Sessions last 400 days and slide forward on use, which is as close to
+indefinite as is achievable — the limit is the browser, not better-auth, since
+Chrome clamps cookie lifetimes to 400 days.
 
 > **Register immediately after deploying.** Since the first registration claims
 > admin, anyone who finds the URL before you do would become the admin. The
@@ -39,9 +63,11 @@ permissions on its own rather than trusting the guard.
 `/admin` has two tabs:
 
 - **users** — pending requests first, each showing the reason they gave.
-  Approve, reject/revoke, grant or revoke high priority, or delete. Rejecting
-  also drops the user's live sessions so it takes effect straight away. Admins
-  can't act on their own account, which prevents locking yourself out.
+  Create a user, approve, reject/revoke, grant or revoke high priority, issue a
+  login code, or delete. Each user's active sessions are listed in their row and
+  can be revoked individually. Rejecting also drops the user's live sessions so
+  it takes effect straight away. Admins can't act on their own account, which
+  prevents locking yourself out.
 - **log** — every page that has been sent: who, when, title, priority, and
   whether PagerDuty actually accepted it. Entries survive the user being
   deleted.

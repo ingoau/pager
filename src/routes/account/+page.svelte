@@ -7,13 +7,33 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
-	import { FingerprintSimpleIcon, PlusIcon, TrashIcon } from 'phosphor-svelte';
+	import { DeviceMobileIcon, FingerprintSimpleIcon, PlusIcon, TrashIcon } from 'phosphor-svelte';
 	import SessionList from '$lib/components/session-list.svelte';
 
 	const { data, form } = $props();
 
 	let adding = $state(false);
 	let newPasskeyName = $state('');
+
+	let deviceCode = $state('');
+	let approving = $state(false);
+
+	async function approveDevice(event: SubmitEvent) {
+		event.preventDefault();
+		approving = true;
+		// Hands this account's identity to whichever device is showing that code.
+		const { error } = await authClient.device.approve({ userCode: deviceCode.trim() });
+		approving = false;
+
+		if (error) {
+			toast.error(error.error_description || 'Could not approve that code');
+			return;
+		}
+
+		deviceCode = '';
+		toast.success('Device approved');
+		await invalidateAll();
+	}
 
 	async function addPasskey() {
 		adding = true;
@@ -107,6 +127,31 @@
 					add
 				</Button>
 			</div>
+		</div>
+
+		<Separator />
+
+		<div class="space-y-2">
+			<h2 class="font-medium">link a device</h2>
+			<p class="text-xs text-muted-foreground">
+				enter the code shown on the other device to sign it in as you
+			</p>
+			<form class="flex items-center gap-2" onsubmit={approveDevice}>
+				<DeviceMobileIcon class="size-4 shrink-0" />
+				<Input
+					bind:value={deviceCode}
+					placeholder="XXXXXXXX"
+					maxlength={20}
+					class="h-8 font-mono tracking-widest"
+					required
+				/>
+				<Button type="submit" size="sm" disabled={approving}>
+					{#if approving}
+						<Spinner />
+					{/if}
+					approve
+				</Button>
+			</form>
 		</div>
 
 		<Separator />

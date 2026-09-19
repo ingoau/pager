@@ -1,5 +1,6 @@
 import { auth } from '$lib/auth';
 import type { PageLog } from './schema';
+import { generateLoginCode, hashLoginCode, LOGIN_CODE_TTL_MINUTES } from './login-code';
 
 export type ManagedUser = {
 	id: string;
@@ -62,6 +63,63 @@ export async function deleteUser(id: string): Promise<void> {
 		where: [{ field: 'userId', value: id }]
 	});
 	await ctx.internalAdapter.deleteUser(id);
+}
+
+/**
+ * Create a user directly, the way an admin does. Deliberately identical to a
+ * user who registered a passkey themselves — the only difference is that they
+ * have no credential yet, which a login code solves.
+ */
+export async function createUser(input: {
+	name: string;
+	email: string;
+	reason?: string;
+}): Promise<{ id: string } | null> {
+	const ctx = await auth.$context;
+	const email = input.email.trim().toLowerCase();
+
+	const existing = await ctx.adapter.findOne({
+		model: 'user',
+		where: [{ field: 'email', value: email }]
+	});
+	if (existing) return null;
+
+	return (await ctx.internalAdapter.createUser({
+		name: input.name.trim(),
+		email,
+		emailVerified: false,
+		reason: input.reason?.trim() || null,
+		role: 'user',
+		status: 'approved',
+		allowHigh: false
+	})) as { id: string };
+}
+
+/**
+ * Issue a one-time login code. Returns the plain code, which is the only time
+ * it exists outside the user's hands — the row stores a hash.
+ */
+export async function issueLoginCode(userId: string): Promise<string> {
+	const ctx = await auth.$context;
+
+	// At most one live code per user, so issuing a new one invalidates the old.
+	await ctx.adapter.deleteMany({
+		model: 'loginCode',
+		where: [{ field: 'userId', value: userId }]
+	});
+
+	const code = generateLoginCode();
+	await ctx.adapter.create({
+		model: 'loginCode',
+		data: {
+			userId,
+			codeHash: await hashLoginCode(code),
+			expiresAt: new Date(Date.now() + LOGIN_CODE_TTL_MINUTES * 60 * 1000),
+			createdAt: new Date()
+		}
+	});
+
+	return code;
 }
 
 export type SessionRow = {

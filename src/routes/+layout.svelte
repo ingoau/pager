@@ -3,17 +3,10 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { ModeWatcher } from 'mode-watcher';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
-	import { authClient } from '$lib/auth-client';
-	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import SignOutButton from '$lib/components/sign-out-button.svelte';
 
 	let { children, data } = $props();
-
-	async function signOut() {
-		await authClient.signOut();
-		await invalidateAll();
-		await goto(resolve('/login'));
-	}
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
@@ -33,7 +26,7 @@
 			{#if data.user.role === 'admin'}
 				<a href={resolve('/admin')} class="hover:underline">admin</a>
 			{/if}
-			<button type="button" class="hover:underline" onclick={signOut}>sign out</button>
+			<SignOutButton />
 		</nav>
 	</header>
 {/if}

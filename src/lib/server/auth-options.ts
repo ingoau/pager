@@ -1,8 +1,12 @@
 import { betterAuth, type BetterAuthOptions, type BetterAuthPlugin } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import { passkey } from '@better-auth/passkey';
+import { deviceAuthorization } from 'better-auth/plugins/device-authorization';
+import { createAuthMiddleware } from 'better-auth/api';
+import { setSessionCookie } from 'better-auth/cookies';
 import { Pool } from 'pg';
 import { pagerSchema } from './schema';
+import { loginCodePlugin } from './login-code';
 
 /**
  * Access request submitted alongside a passkey registration ceremony. The
@@ -62,6 +66,18 @@ function sslFor(databaseUrl: string) {
 	return isLocal ? false : { rejectUnauthorized: false };
 }
 
+/** The only client allowed to start a device-linking flow. */
+export const DEVICE_CLIENT_ID = 'pager-web';
+
+/**
+ * Sessions are meant to last indefinitely. There is no "never expires" option,
+ * and the real ceiling isn't better-auth but the browser: Chrome clamps cookie
+ * lifetimes to 400 days. So set the cookie to that maximum and slide it forward
+ * on every use, which keeps an active session alive forever in practice.
+ */
+const SESSION_EXPIRES_IN = 60 * 60 * 24 * 400;
+const SESSION_UPDATE_AGE = 60 * 60 * 24;
+
 export type AuthEnv = {
 	secret: string;
 	baseURL: string;
@@ -82,6 +98,10 @@ export function createAuthOptions(env: AuthEnv, extraPlugins: BetterAuthPlugin[]
 			connectionString: env.databaseUrl,
 			ssl: sslFor(env.databaseUrl)
 		}),
+		session: {
+			expiresIn: SESSION_EXPIRES_IN,
+			updateAge: SESSION_UPDATE_AGE
+		},
 		user: {
 			additionalFields: {
 				/** 'pending' until an admin approves; only 'approved' users can page. */
@@ -120,11 +140,42 @@ export function createAuthOptions(env: AuthEnv, extraPlugins: BetterAuthPlugin[]
 			customRules: {
 				'/passkey/generate-register-options': { window: 60, max: 5 },
 				'/passkey/verify-registration': { window: 60, max: 5 },
-				'/passkey/generate-authenticate-options': { window: 60, max: 20 }
+				'/passkey/generate-authenticate-options': { window: 60, max: 20 },
+				// Guessing a code is hopeless at 60 bits, but cap attempts anyway.
+				'/login-code/redeem': { window: 60, max: 5 },
+				'/device/code': { window: 60, max: 10 },
+				'/device/approve': { window: 60, max: 10 }
 			}
 		},
 		plugins: [
 			pagerSchema(),
+			loginCodePlugin(),
+			deviceAuthorization({
+				// Long enough to walk to the other device, short enough that an
+				// abandoned code stops being useful quickly.
+				expiresIn: '10m',
+				interval: '3s',
+				validateClient: (clientId) => clientId === DEVICE_CLIENT_ID,
+				// Required at runtime even though the type marks it optional.
+				schema: {}
+			}),
+			{
+				// The device-authorization plugin follows RFC 8628 and answers with a
+				// Bearer token, leaving the browser without a session cookie. The
+				// session it created is on the context, so turn it into a real cookie.
+				id: 'device-session-cookie',
+				hooks: {
+					after: [
+						{
+							matcher: (ctx) => ctx.path === '/device/token',
+							handler: createAuthMiddleware(async (ctx) => {
+								const newSession = ctx.context.newSession;
+								if (newSession) await setSessionCookie(ctx, newSession);
+							})
+						}
+					]
+				}
+			} satisfies BetterAuthPlugin,
 			passkey({
 				rpName: 'pager',
 				registration: {

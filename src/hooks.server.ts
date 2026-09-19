@@ -4,7 +4,7 @@ import { building } from '$app/environment';
 import { redirect, type Handle } from '@sveltejs/kit';
 
 /** Routes reachable without an approved account. */
-const PUBLIC_ROUTES = ['/login', '/register', '/pending'];
+const PUBLIC_ROUTES = ['/login', '/register', '/pending', '/link'];
 
 function isPublic(pathname: string) {
 	return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));

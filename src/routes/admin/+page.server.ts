@@ -1,8 +1,10 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import {
+	createUser,
 	deleteUser,
 	getUser,
+	issueLoginCode,
 	listActiveSessions,
 	listPageLog,
 	listUsers,
@@ -106,6 +108,41 @@ export const actions = {
 		await updateUser(result.id, { allowHigh });
 		return {
 			success: `${allowHigh ? 'Granted' : 'Revoked'} high priority for ${result.user.email}.`
+		};
+	},
+
+	create: async ({ locals, request }) => {
+		requireAdmin(locals);
+
+		const formData = await request.formData();
+		const name = formData.get('name')?.toString().trim() ?? '';
+		const email = formData.get('email')?.toString().trim().toLowerCase() ?? '';
+		const reason = formData.get('reason')?.toString().trim() ?? '';
+
+		if (!name || name.length > 80) return fail(400, { error: 'Name is required.' });
+		if (!/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(email) || email.length > 200) {
+			return fail(400, { error: 'A valid email is required.' });
+		}
+		if (reason.length > 500) return fail(400, { error: 'Reason is too long.' });
+
+		const created = await createUser({ name, email, reason });
+		if (!created) return fail(409, { error: 'That email already has an account.' });
+
+		// Hand back a code straight away — the account has no credential yet, so
+		// without one there is no way in.
+		const code = await issueLoginCode(created.id);
+		return { success: `Created ${email}.`, code, codeFor: email };
+	},
+
+	issueCode: async ({ locals, request }) => {
+		const result = await target(locals, request);
+		if ('error' in result) return result.error;
+
+		const code = await issueLoginCode(result.id);
+		return {
+			success: `New login code for ${result.user.email}.`,
+			code,
+			codeFor: result.user.email
 		};
 	},
 

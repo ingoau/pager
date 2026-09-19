@@ -2,8 +2,17 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { enhance } from '$app/forms';
-	import { CheckIcon, ProhibitIcon, TrashIcon, XIcon } from 'phosphor-svelte';
+	import {
+		CheckIcon,
+		KeyIcon,
+		ProhibitIcon,
+		TrashIcon,
+		UserPlusIcon,
+		XIcon
+	} from 'phosphor-svelte';
 	import SessionList from '$lib/components/session-list.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import { Label } from '$lib/components/ui/label/index.js';
 
 	const { data, form } = $props();
 
@@ -15,6 +24,8 @@
 	});
 
 	const pendingCount = $derived(data.users.filter((user) => user.status === 'pending').length);
+
+	let creating = $state(false);
 </script>
 
 <div class="w-full p-4">
@@ -41,6 +52,14 @@
 
 		{#if form?.error}
 			<p class="border border-destructive p-2 text-sm">{form.error}</p>
+		{:else if form?.code}
+			<div class="space-y-2 border p-3">
+				<p class="text-sm">{form.success}</p>
+				<p class="font-mono text-2xl tracking-widest select-all">{form.code}</p>
+				<p class="text-xs text-muted-foreground">
+					give this to {form.codeFor} — it works once, expires in 15 minutes, and won't be shown again
+				</p>
+			</div>
 		{:else if form?.success}
 			<p class="border p-2 text-sm">{form.success}</p>
 		{/if}
@@ -48,6 +67,39 @@
 		<Separator />
 
 		{#if tab === 'users'}
+			{#if creating}
+				<form method="POST" action="?/create" class="space-y-3 border p-3" use:enhance>
+					<h2 class="font-medium">new user</h2>
+					<p class="text-xs text-muted-foreground">
+						they get a login code instead of a passkey, and can add passkeys once they're in
+					</p>
+					<div class="grid gap-3 sm:grid-cols-2">
+						<div class="space-y-1">
+							<Label for="new-name">name</Label>
+							<Input id="new-name" name="name" required maxlength={80} />
+						</div>
+						<div class="space-y-1">
+							<Label for="new-email">email</Label>
+							<Input id="new-email" name="email" type="email" required maxlength={200} />
+						</div>
+					</div>
+					<div class="space-y-1">
+						<Label for="new-reason">note (optional)</Label>
+						<Input id="new-reason" name="reason" maxlength={500} />
+					</div>
+					<div class="flex gap-2">
+						<Button type="submit" size="sm">create</Button>
+						<Button type="button" size="sm" variant="ghost" onclick={() => (creating = false)}>
+							cancel
+						</Button>
+					</div>
+				</form>
+			{:else}
+				<Button size="sm" variant="outline" onclick={() => (creating = true)}>
+					<UserPlusIcon /> new user
+				</Button>
+			{/if}
+
 			<ul class="divide-y border">
 				{#each data.users as user (user.id)}
 					<li class="space-y-2 p-3">
@@ -99,6 +151,12 @@
 									<input type="hidden" name="allowHigh" value={user.allowHigh ? 'false' : 'true'} />
 									<Button type="submit" size="sm" variant="outline">
 										{user.allowHigh ? 'disallow' : 'allow'} high priority
+									</Button>
+								</form>
+								<form method="POST" action="?/issueCode" use:enhance>
+									<input type="hidden" name="id" value={user.id} />
+									<Button type="submit" size="sm" variant="outline">
+										<KeyIcon /> login code
 									</Button>
 								</form>
 								<form method="POST" action="?/remove" class="ml-auto" use:enhance>
