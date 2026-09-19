@@ -1,49 +1,62 @@
-import type { Actions } from './$types';
-import { PAGERDUTY_KEY, PAGERDUTY_SERVICE } from '$env/static/private';
+import { fail } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { isUrgency, triggerIncident } from '$lib/server/pagerduty';
+import { recordPage } from '$lib/server/store';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	return {
+		allowHigh: locals.user?.allowHigh ?? false
+	};
+};
 
 export const actions = {
-	default: async (event) => {
-		const formData = await event.request.formData();
-		const description = formData.get('description')?.toString();
-		const details = formData.get('details')?.toString();
-		const priority = formData.get('priority')?.toString();
-
-		const url = 'https://api.pagerduty.com/incidents';
-		const options = {
-			method: 'POST',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-				From: '',
-				Authorization: 'Token token=' + PAGERDUTY_KEY
-			},
-			body: JSON.stringify({
-				incident: {
-					type: 'incident',
-					title: description ?? 'No description provided',
-					service: { id: PAGERDUTY_SERVICE, type: 'service_reference' },
-					urgency: priority ?? 'low',
-					body: {
-						type: 'incident_body',
-						details: details ?? 'No details provided'
-					}
-				}
-			})
-		};
-
-		try {
-			const response = await fetch(url, options);
-			const data = await response.json();
-			console.log(data);
-		} catch (error) {
-			console.error(error);
-			return {
-				success: false
-			};
+	default: async ({ request, locals }) => {
+		const user = locals.user;
+		// hooks.server.ts already guards this route; this is the backstop that
+		// keeps the action itself from ever being the weak point.
+		if (!user || user.status !== 'approved') {
+			return fail(401, { error: 'You are not allowed to send pages.' });
 		}
 
-		return {
-			success: true
-		};
+		const formData = await request.formData();
+		const title = formData.get('description')?.toString().trim() ?? '';
+		const details = formData.get('details')?.toString().trim() ?? '';
+		const requested = formData.get('priority')?.toString() ?? 'low';
+
+		if (!title) {
+			return fail(400, { error: 'A short description is required.' });
+		}
+
+		if (!isUrgency(requested)) {
+			return fail(400, { error: 'Invalid priority.' });
+		}
+
+		// Users without the high-priority permission are capped at low, whatever
+		// the form said.
+		const urgency = requested === 'high' && !user.allowHigh ? 'low' : requested;
+
+		const result = await triggerIncident({
+			title,
+			details: details || 'No details provided',
+			urgency
+		});
+
+		await recordPage({
+			userId: user.id,
+			userName: user.name,
+			userEmail: user.email,
+			title,
+			details: details || null,
+			urgency,
+			status: result.ok ? 'sent' : 'failed',
+			incidentId: result.ok ? result.incidentId : null,
+			error: result.ok ? null : result.error
+		});
+
+		if (!result.ok) {
+			return fail(502, { error: result.error });
+		}
+
+		return { success: true };
 	}
 } satisfies Actions;
