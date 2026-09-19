@@ -21,6 +21,8 @@ export const actions = {
 		const formData = await request.formData();
 		const title = formData.get('description')?.toString().trim() ?? '';
 		const details = formData.get('details')?.toString().trim() ?? '';
+		// The form only sends `priority` when the high-priority box is ticked, so
+		// an absent field is an ordinary low-priority page.
 		const requested = formData.get('priority')?.toString() ?? 'low';
 
 		if (!title) {
