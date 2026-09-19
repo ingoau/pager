@@ -2,6 +2,7 @@ import { auth } from '$lib/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
 import { redirect, type Handle } from '@sveltejs/kit';
+import type { RequestEvent } from '@sveltejs/kit';
 
 /** Routes reachable without an approved account. */
 const PUBLIC_ROUTES = ['/login', '/register', '/pending', '/link'];
@@ -10,10 +11,31 @@ function isPublic(pathname: string) {
 	return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
+/**
+ * Sessions are served from a signed cookie for up to a minute, so most requests
+ * never touch the database. That staleness is only acceptable where being a
+ * minute out of date is harmless.
+ *
+ * It is not harmless when something is actually being done: anything that
+ * writes — sending a page, an admin approving or revoking, a user managing
+ * their own passkeys and sessions — reads the session fresh, so a revoked
+ * session or a withdrawn permission stops working at once. The admin panel
+ * reads fresh too, so a demoted admin loses it immediately rather than keeping
+ * it until the cookie expires.
+ *
+ * What is left is ordinary page views, where the worst case is someone seeing
+ * a page for a few more seconds before the redirect catches up. They still
+ * cannot page anyone: that is a POST.
+ */
+function needsFreshSession(event: RequestEvent) {
+	return event.request.method !== 'GET' || event.url.pathname.startsWith('/admin');
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	// Fetch current session from Better Auth
 	const session = await auth.api.getSession({
-		headers: event.request.headers
+		headers: event.request.headers,
+		query: needsFreshSession(event) ? { disableCookieCache: true } : undefined
 	});
 
 	// Make session and user available on server

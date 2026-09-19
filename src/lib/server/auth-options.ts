@@ -91,6 +91,19 @@ export const DEVICE_CLIENT_ID = 'pager-web';
 const SESSION_EXPIRES_IN = 60 * 60 * 24 * 400;
 const SESSION_UPDATE_AGE = 60 * 60 * 24;
 
+/**
+ * How long a session may be served from the signed cookie instead of the
+ * database. Every request looks up a session, so without this each one costs a
+ * database round trip.
+ *
+ * The cost is staleness: for up to this long the cookie still says what the
+ * database said when it was written, so a revoked session, a rejected user or a
+ * withdrawn permission all keep working. hooks.server.ts bypasses the cache on
+ * the paths where that actually matters — see `needsFreshSession` there — so
+ * this window only ever applies to ordinary page views.
+ */
+const SESSION_CACHE_SECONDS = 60;
+
 export type AuthEnv = {
 	secret: string;
 	baseURL: string;
@@ -113,7 +126,20 @@ export function createAuthOptions(env: AuthEnv, extraPlugins: BetterAuthPlugin[]
 		}),
 		session: {
 			expiresIn: SESSION_EXPIRES_IN,
-			updateAge: SESSION_UPDATE_AGE
+			updateAge: SESSION_UPDATE_AGE,
+			cookieCache: {
+				enabled: true,
+				maxAge: SESSION_CACHE_SECONDS
+			}
+		},
+		advanced: {
+			database: {
+				// better-auth introspects the schema when it initialises, which on
+				// serverless means extra queries on every cold start. It is a
+				// development safety net; in production the migration has already
+				// run and `bun run db:migrate` is what catches drift.
+				validateSchema: process.env.NODE_ENV !== 'production'
+			}
 		},
 		user: {
 			additionalFields: {
