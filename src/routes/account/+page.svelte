@@ -27,13 +27,35 @@
 	let confirmLink = $state(false);
 
 	/**
-	 * Approving hands full access to this account to whichever device holds that
-	 * code, so make the user say so explicitly. A code someone else read out to
-	 * you is an attack, not a favour.
+	 * Claim the code first. GET /device binds it to this session atomically, and
+	 * better-auth then refuses an approval from anyone else — so this both
+	 * validates the code and reserves it before we ask anything.
 	 */
-	function askToApprove(event: SubmitEvent) {
+	async function askToApprove(event: SubmitEvent) {
 		event.preventDefault();
-		if (deviceCode.trim()) confirmLink = true;
+
+		const code = deviceCode.trim();
+		if (!code) return;
+
+		approving = true;
+		const response = await fetch(`/api/auth/device?user_code=${encodeURIComponent(code)}`);
+		const body = await response.json().catch(() => null);
+		approving = false;
+
+		if (!response.ok) {
+			toast.error(body?.error_description || 'That code is not valid.');
+			return;
+		}
+		if (!body?.client_id) {
+			// Claimed by somebody else, so this session can't approve it.
+			toast.error('That code is already being reviewed somewhere else.');
+			return;
+		}
+
+		// Approving hands full access to this account to whoever holds that code,
+		// so make the user say so explicitly. A code someone read out to you is an
+		// attack, not a favour.
+		confirmLink = true;
 	}
 
 	async function approveDevice() {

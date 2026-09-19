@@ -2,7 +2,7 @@ import { betterAuth, type BetterAuthOptions, type BetterAuthPlugin } from 'bette
 import { APIError } from 'better-auth/api';
 import { passkey } from '@better-auth/passkey';
 import { deviceAuthorization } from 'better-auth/plugins/device-authorization';
-import { createAuthMiddleware } from 'better-auth/api';
+import { createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { setSessionCookie } from 'better-auth/cookies';
 import { Pool } from 'pg';
 import { pagerSchema } from './schema';
@@ -222,7 +222,11 @@ export function createAuthOptions(env: AuthEnv, extraPlugins: BetterAuthPlugin[]
 					afterVerification: async ({ ctx, context }) => {
 						// A session here means an existing user adding another passkey;
 						// the plugin already resolved them, so there is nothing to create.
-						if (ctx.context.session?.user?.id) return;
+						// This endpoint has no session middleware (requireSession is off),
+						// so ctx.context.session is not populated — read it the same way
+						// the plugin itself does.
+						const session = await getSessionFromCtx(ctx);
+						if (session?.user?.id) return;
 
 						const request = parseAccessRequest(context);
 
