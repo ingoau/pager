@@ -8,7 +8,7 @@ import {
 	listActiveSessions,
 	listPageLog,
 	listUsers,
-	revokeSessionByToken,
+	revokeSessionById,
 	revokeSessions,
 	updateUser
 } from '$lib/server/store';
@@ -51,7 +51,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 			...user,
 			sessions: (byUser.get(user.id) ?? []).map((session) => ({
 				id: session.id,
-				token: session.token,
 				createdAt: session.createdAt,
 				expiresAt: session.expiresAt,
 				ipAddress: session.ipAddress ?? null,
@@ -150,13 +149,14 @@ export const actions = {
 		requireAdmin(locals);
 
 		const formData = await request.formData();
-		const token = formData.get('token')?.toString() ?? '';
-		if (!token) return fail(400, { error: 'Missing session.' });
+		const sessionId = formData.get('sessionId')?.toString() ?? '';
+		if (!sessionId) return fail(400, { error: 'Missing session.' });
 
-		await revokeSessionByToken(token);
+		const revoked = await revokeSessionById(sessionId);
+		if (!revoked) return fail(404, { error: 'No such session.' });
 
 		// Admins can revoke their own session here too; that signs them out.
-		if (token === locals.session?.token) redirect(302, '/login');
+		if (revoked.token === locals.session?.token) redirect(302, '/login');
 
 		return { success: 'Session revoked.' };
 	},

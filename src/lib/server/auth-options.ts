@@ -50,19 +50,32 @@ function parseAccessRequest(raw: string | null | undefined): AccessRequest {
 }
 
 /**
- * Managed Postgres providers generally require TLS and serve certificates the
- * default trust store doesn't cover; a local dev server usually speaks no TLS
- * at all. Pick based on the host rather than forcing one or the other.
+ * TLS for the database connection.
+ *
+ * If the connection string sets `sslmode`, `pg` already knows what to do and we
+ * stay out of the way — that is how you get real certificate verification, with
+ * `?sslmode=verify-full`.
+ *
+ * With no `sslmode`, a local server gets no TLS (it usually speaks none) and a
+ * remote one gets TLS without certificate verification. That last case is a
+ * deliberate compromise for managed providers that serve certificates the
+ * system trust store doesn't cover, and it does NOT protect against an attacker
+ * who can intercept the connection. Production should pin it down by putting
+ * `sslmode=verify-full` (and `sslrootcert`) in DATABASE_URL.
  */
 function sslFor(databaseUrl: string) {
-	let hostname: string;
+	let url: URL;
 	try {
-		hostname = new URL(databaseUrl).hostname;
+		url = new URL(databaseUrl);
 	} catch {
 		return { rejectUnauthorized: false };
 	}
 
-	const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+	// Let pg read sslmode/sslrootcert straight off the connection string.
+	if (url.searchParams.has('sslmode')) return undefined;
+
+	const isLocal =
+		url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1';
 	return isLocal ? false : { rejectUnauthorized: false };
 }
 

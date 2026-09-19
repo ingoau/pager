@@ -147,12 +147,31 @@ export async function listActiveSessions(): Promise<SessionRow[]> {
 }
 
 /**
- * Revoke one session by its token, whoever it belongs to. Admin-only — the
- * account page uses better-auth's own endpoint, which is scoped to the caller.
+ * Look up a session by its row id.
+ *
+ * Session tokens are credentials, so they never leave the server: the browser
+ * only ever sees the row id, and every revoke resolves it back to a token here.
  */
-export async function revokeSessionByToken(token: string): Promise<void> {
+export async function getSessionById(id: string): Promise<SessionRow | null> {
+	return await (
+		await adapter()
+	).findOne<SessionRow>({
+		model: 'session',
+		where: [{ field: 'id', value: id }]
+	});
+}
+
+/**
+ * Revoke one session, whoever it belongs to. Admin-only — the account page
+ * goes through better-auth's own endpoint, which is scoped to the caller.
+ */
+export async function revokeSessionById(id: string): Promise<SessionRow | null> {
+	const session = await getSessionById(id);
+	if (!session) return null;
+
 	const ctx = await auth.$context;
-	await ctx.internalAdapter.deleteSession(token);
+	await ctx.internalAdapter.deleteSession(session.token);
+	return session;
 }
 
 /** Drop every session a user holds, so a revoked account loses access at once. */

@@ -5,7 +5,6 @@
 
 	type Entry = {
 		id: string;
-		token: string;
 		createdAt: string | Date;
 		expiresAt: string | Date;
 		ipAddress?: string | null;
@@ -78,7 +77,7 @@
 				</p>
 			</div>
 			<form method="POST" {action} class="shrink-0" use:enhance>
-				<input type="hidden" name="token" value={session.token} />
+				<input type="hidden" name="sessionId" value={session.id} />
 				<Button type="submit" variant="outline" size="sm">
 					{session.current ? 'sign out' : 'revoke'}
 				</Button>

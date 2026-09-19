@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/auth';
+import { getSessionById } from '$lib/server/store';
 
 export const load: PageServerLoad = async ({ locals, request }) => {
 	if (!locals.user) redirect(302, '/login');
@@ -23,7 +24,6 @@ export const load: PageServerLoad = async ({ locals, request }) => {
 		sessions: sessions
 			.map((session) => ({
 				id: session.id,
-				token: session.token,
 				createdAt: session.createdAt,
 				expiresAt: session.expiresAt,
 				ipAddress: session.ipAddress ?? null,
@@ -54,15 +54,21 @@ export const actions = {
 		if (!locals.user) return fail(401, { error: 'Not signed in.' });
 
 		const formData = await request.formData();
-		const token = formData.get('token')?.toString() ?? '';
-		if (!token) return fail(400, { error: 'Missing session.' });
+		const sessionId = formData.get('sessionId')?.toString() ?? '';
+		if (!sessionId) return fail(400, { error: 'Missing session.' });
 
-		// better-auth only revokes tokens belonging to the caller, so a forged
-		// token from another account is a no-op rather than a hijack.
-		await auth.api.revokeSession({ headers: request.headers, body: { token } });
+		// The browser only ever holds the row id, so resolve it here and refuse
+		// anything that isn't the caller's own session.
+		const session = await getSessionById(sessionId);
+		if (!session || session.userId !== locals.user.id) {
+			return fail(404, { error: 'No such session.' });
+		}
+
+		// better-auth re-checks ownership against the caller as well.
+		await auth.api.revokeSession({ headers: request.headers, body: { token: session.token } });
 
 		// Revoking the session you are using signs you out.
-		if (token === locals.session?.token) redirect(302, '/login');
+		if (session.token === locals.session?.token) redirect(302, '/login');
 
 		return { success: true };
 	},

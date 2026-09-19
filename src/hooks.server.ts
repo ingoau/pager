@@ -34,7 +34,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (pathname !== '/pending') redirect(302, '/pending');
 		} else {
 			// Signed in and approved — no reason to sit on the signed-out pages.
-			if (pathname === '/login' || pathname === '/register' || pathname === '/pending') {
+			// /login matches by prefix so the code page is covered too. /link is
+			// left reachable: a signed-in browser can still fetch a code for itself.
+			if (
+				pathname === '/login' ||
+				pathname.startsWith('/login/') ||
+				pathname === '/register' ||
+				pathname === '/pending'
+			) {
 				redirect(302, '/');
 			}
 			if (pathname.startsWith('/admin') && user.role !== 'admin') {

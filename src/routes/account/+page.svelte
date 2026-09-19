@@ -7,7 +7,14 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
-	import { DeviceMobileIcon, FingerprintSimpleIcon, PlusIcon, TrashIcon } from 'phosphor-svelte';
+	import {
+		DeviceMobileIcon,
+		FingerprintSimpleIcon,
+		PlusIcon,
+		TrashIcon,
+		WarningIcon
+	} from 'phosphor-svelte';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import SessionList from '$lib/components/session-list.svelte';
 
 	const { data, form } = $props();
@@ -17,13 +24,23 @@
 
 	let deviceCode = $state('');
 	let approving = $state(false);
+	let confirmLink = $state(false);
 
-	async function approveDevice(event: SubmitEvent) {
+	/**
+	 * Approving hands full access to this account to whichever device holds that
+	 * code, so make the user say so explicitly. A code someone else read out to
+	 * you is an attack, not a favour.
+	 */
+	function askToApprove(event: SubmitEvent) {
 		event.preventDefault();
+		if (deviceCode.trim()) confirmLink = true;
+	}
+
+	async function approveDevice() {
 		approving = true;
-		// Hands this account's identity to whichever device is showing that code.
 		const { error } = await authClient.device.approve({ userCode: deviceCode.trim() });
 		approving = false;
+		confirmLink = false;
 
 		if (error) {
 			toast.error(error.error_description || 'Could not approve that code');
@@ -136,7 +153,7 @@
 			<p class="text-xs text-muted-foreground">
 				enter the code shown on the other device to sign it in as you
 			</p>
-			<form class="flex items-center gap-2" onsubmit={approveDevice}>
+			<form class="flex items-center gap-2" onsubmit={askToApprove}>
 				<DeviceMobileIcon class="size-4 shrink-0" />
 				<Input
 					bind:value={deviceCode}
@@ -163,3 +180,29 @@
 		</div>
 	</div>
 </div>
+
+<AlertDialog.Root bind:open={confirmLink}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<WarningIcon class="size-8" />
+			<AlertDialog.Title>sign in another device?</AlertDialog.Title>
+			<AlertDialog.Description>
+				this gives whichever device is showing <span class="font-mono">{deviceCode.trim()}</span>
+				full access to your account.
+				<br />
+				<br />
+				only continue if you are holding that device. if someone sent you this code, they are trying to
+				get in as you.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel disabled={approving}>cancel</AlertDialog.Cancel>
+			<AlertDialog.Action onclick={approveDevice} disabled={approving}>
+				{#if approving}
+					<Spinner />
+				{/if}
+				approve
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
