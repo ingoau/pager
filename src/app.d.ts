@@ -7,7 +7,11 @@ type AuthSession = typeof auth.$Infer.Session;
 // for information about these interfaces
 declare global {
 	namespace App {
-		// interface Error {}
+		interface Error {
+			message: string;
+			/** Correlates what the user sees with the stack trace in the logs. */
+			id?: string;
+		}
 		interface Locals {
 			session: AuthSession['session'] | null;
 			user: AuthSession['user'] | null;
