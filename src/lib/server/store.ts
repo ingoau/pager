@@ -84,15 +84,18 @@ export async function createUser(input: {
 	});
 	if (existing) return null;
 
-	return (await ctx.internalAdapter.createUser({
-		name: input.name.trim(),
-		email,
-		emailVerified: false,
-		reason: input.reason?.trim() || null,
-		role: 'user',
-		status: 'approved',
-		allowHigh: false
-	})) as { id: string };
+	return (await ctx.internalAdapter.createUser(
+		{
+			name: input.name.trim(),
+			email,
+			emailVerified: false,
+			reason: input.reason?.trim() || null,
+			role: 'user',
+			status: 'approved',
+			allowHigh: false
+		},
+		{ method: 'admin' }
+	)) as { id: string };
 }
 
 /**
@@ -155,7 +158,9 @@ export async function revokeSessionByToken(token: string): Promise<void> {
 /** Drop every session a user holds, so a revoked account loses access at once. */
 export async function revokeSessions(id: string): Promise<void> {
 	const ctx = await auth.$context;
-	await ctx.internalAdapter.deleteSessions(id);
+	// better-auth 1.7 split these: deleteSessions now takes session tokens, and
+	// deleteUserSessions is the one that clears every session for a user.
+	await ctx.internalAdapter.deleteUserSessions(id);
 }
 
 export async function countUsers(): Promise<number> {

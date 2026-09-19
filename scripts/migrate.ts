@@ -27,11 +27,28 @@ const options = createAuthOptions({
 	databaseUrl: requireEnv('DATABASE_URL')
 });
 
-const { toBeCreated, toBeAdded, runMigrations, compileMigrations } = await getMigrations(options);
+const {
+	toBeCreated,
+	toBeAdded,
+	toBeAddedIndexes,
+	unsafeChanges,
+	schemaProblems,
+	runMigrations,
+	compileMigrations
+	// Report unsafe changes rather than throwing, so this script can print the
+	// whole plan before deciding what to do with it.
+} = await getMigrations(options, { throwOnUnsafe: false });
 
-if (toBeCreated.length === 0 && toBeAdded.length === 0) {
+for (const problem of schemaProblems) {
+	console.error(`schema problem: ${problem}`);
+}
+
+const pending =
+	toBeCreated.length + toBeAdded.length + toBeAddedIndexes.length + unsafeChanges.length;
+
+if (pending === 0) {
 	console.log('Database is already up to date.');
-	process.exit(0);
+	process.exit(schemaProblems.length > 0 ? 1 : 0);
 }
 
 for (const { table, fields } of toBeCreated) {
@@ -39,6 +56,18 @@ for (const { table, fields } of toBeCreated) {
 }
 for (const { table, fields } of toBeAdded) {
 	console.log(`alter table ${table} add ${Object.keys(fields).join(', ')}`);
+}
+for (const { table, name } of toBeAddedIndexes) {
+	console.log(`create index ${name} on ${table}`);
+}
+
+if (unsafeChanges.length > 0) {
+	// A required column with no default can't be backfilled on a table that
+	// already has rows; better-auth refuses rather than guessing a value.
+	console.error('\nRefusing to apply, these changes would need a backfill:');
+	for (const change of unsafeChanges) console.error(`  ${change}`);
+	console.error('\nAdd the columns by hand with a sensible default, then re-run.');
+	process.exit(1);
 }
 
 if (dryRun) {

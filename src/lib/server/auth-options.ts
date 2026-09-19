@@ -217,15 +217,18 @@ export function createAuthOptions(env: AuthEnv, extraPlugins: BetterAuthPlugin[]
 						const userCount = await ctx.context.adapter.count({ model: 'user' });
 						const isFirstUser = userCount === 0;
 
-						const created = (await ctx.context.internalAdapter.createUser({
-							name: request.name,
-							email: request.email,
-							emailVerified: false,
-							reason: request.reason,
-							role: isFirstUser ? 'admin' : 'user',
-							status: isFirstUser ? 'approved' : 'pending',
-							allowHigh: isFirstUser
-						})) as { id: string };
+						const created = (await ctx.context.internalAdapter.createUser(
+							{
+								name: request.name,
+								email: request.email,
+								emailVerified: false,
+								reason: request.reason,
+								role: isFirstUser ? 'admin' : 'user',
+								status: isFirstUser ? 'approved' : 'pending',
+								allowHigh: isFirstUser
+							},
+							{ method: 'passkey' }
+						)) as { id: string };
 
 						// Two people registering at once could both have counted zero
 						// above. Only the earliest row keeps admin; anyone else who tied
