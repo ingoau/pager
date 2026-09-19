@@ -4,6 +4,9 @@
 	import { FingerprintSimpleIcon } from 'phosphor-svelte';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
 
 	let authenticating = $state(false);
 
@@ -12,8 +15,13 @@
 		const { error } = await authClient.signIn.passkey();
 		if (error) {
 			toast.error(error.message || 'Something went wrong');
+			authenticating = false;
+			return;
 		}
-		authenticating = false;
+		// The layout guard decides where they actually land: the pager if
+		// approved, the holding page if not.
+		await invalidateAll();
+		await goto(resolve('/'));
 	}
 
 	onMount(() => {
@@ -25,6 +33,16 @@
 	<div class="mx-auto flex w-full max-w-xl flex-col items-center gap-2 border bg-card p-4">
 		<FingerprintSimpleIcon class="size-10" />
 		authenticate to access
-		<Button disabled={authenticating} onclick={authenticate}>passkey</Button>
+		<Button disabled={authenticating} onclick={authenticate}>
+			{#if authenticating}
+				<Spinner />
+			{/if}
+			passkey
+		</Button>
+		<p class="mt-2 text-xs text-muted-foreground">
+			<a href={resolve('/login/code')} class="underline">use a login code</a>
+			· <a href={resolve('/link')} class="underline">another device</a>
+			· <a href={resolve('/register')} class="underline">request access</a>
+		</p>
 	</div>
 </div>

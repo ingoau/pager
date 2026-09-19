@@ -15,7 +15,7 @@
 	let confirmed = $state(false);
 	let loading = $state(false);
 
-	const { form } = $props();
+	const { form, data } = $props();
 
 	function handleSubmit(event: SubmitEvent) {
 		if (!confirmed) {
@@ -33,18 +33,11 @@
 
 <div class="w-full p-4">
 	<div class="mx-auto w-full max-w-xl border bg-card p-4">
-		{#if form}
-			{#if form.success}
-				<div class="flex flex-row items-center gap-2">
-					<CheckIcon class="size-6" />
-					<p>submitted</p>
-				</div>
-			{:else if !form.success}
-				<div class="flex flex-row items-center gap-2">
-					<XIcon class="size-6" />
-					<p>something went wrong</p>
-				</div>
-			{/if}
+		{#if form?.success}
+			<div class="flex flex-row items-center gap-2">
+				<CheckIcon class="size-6" />
+				<p>submitted</p>
+			</div>
 		{:else}
 			<form
 				class="space-y-4"
@@ -66,18 +59,28 @@
 				}}
 			>
 				<h1 class="text-lg font-semibold">pager</h1>
+				{#if form?.error}
+					<div class="flex flex-row items-start gap-2 border border-destructive p-2 text-sm">
+						<XIcon class="mt-0.5 size-4 shrink-0" />
+						<p>{form.error}</p>
+					</div>
+				{/if}
 				<Input required placeholder="short description*" name="description" autofocus />
 				<Textarea placeholder="more details" name="details"></Textarea>
-				<RadioGroup.Root required value="low" name="priority">
-					<div class="flex items-center space-x-2">
-						<RadioGroup.Item value="low" id="low" />
-						<Label for="low">Low priority</Label>
-					</div>
-					<div class="flex items-center space-x-2">
-						<RadioGroup.Item value="high" id="high" />
-						<Label for="high">High priority</Label>
-					</div>
-				</RadioGroup.Root>
+				{#if data.allowHigh}
+					<RadioGroup.Root required value="low" name="priority">
+						<div class="flex items-center space-x-2">
+							<RadioGroup.Item value="low" id="low" />
+							<Label for="low">Low priority</Label>
+						</div>
+						<div class="flex items-center space-x-2">
+							<RadioGroup.Item value="high" id="high" />
+							<Label for="high">High priority</Label>
+						</div>
+					</RadioGroup.Root>
+				{:else}
+					<input type="hidden" name="priority" value="low" />
+				{/if}
 				<Button type="submit">Submit</Button>
 			</form>
 		{/if}
