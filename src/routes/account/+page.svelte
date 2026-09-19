@@ -52,7 +52,9 @@
 
 		<div class="space-y-2">
 			<h2 class="font-medium">passkeys</h2>
-			<p class="text-xs text-muted-foreground">one per device, so you don't get locked out.</p>
+			<p class="text-xs text-muted-foreground">
+				add additional passkeys so you don't get locked out
+			</p>
 
 			{#if form?.error}
 				<p class="border border-destructive p-2 text-sm">{form.error}</p>

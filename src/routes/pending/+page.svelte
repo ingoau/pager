@@ -21,11 +21,11 @@
 		{#if data.status === 'rejected'}
 			<ProhibitIcon class="size-10" />
 			<h1 class="text-lg font-semibold">access denied</h1>
-			<p class="text-sm text-muted-foreground">reach out some other way.</p>
+			<p class="text-sm text-muted-foreground">request rejected</p>
 		{:else}
 			<HourglassIcon class="size-10" />
 			<h1 class="text-lg font-semibold">waiting for approval</h1>
-			<p class="text-sm text-muted-foreground">your passkey is registered.</p>
+			<p class="text-sm text-muted-foreground">passkey registered</p>
 		{/if}
 		<Button variant="outline" onclick={signOut}>sign out</Button>
 	</div>

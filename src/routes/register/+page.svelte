@@ -5,7 +5,6 @@
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
-	import { CrownSimpleIcon } from 'phosphor-svelte';
 	import { toast } from 'svelte-sonner';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -52,15 +51,8 @@
 		<form class="space-y-4" onsubmit={register}>
 			<h1 class="text-lg font-semibold">request access</h1>
 
-			{#if data.firstUser}
-				<div class="flex flex-row items-start gap-2 border p-2 text-sm">
-					<CrownSimpleIcon class="mt-0.5 size-4 shrink-0" />
-					<p>first registration — you'll be the admin.</p>
-				</div>
-			{:else}
-				<p class="text-sm text-muted-foreground">
-					the admin has to approve you before you can page.
-				</p>
+			{#if !data.firstUser}
+				<p class="text-sm text-muted-foreground">you must be approved</p>
 			{/if}
 
 			<div class="space-y-1">
