@@ -178,6 +178,25 @@ export function createAuthOptions(env: AuthEnv, extraPlugins: BetterAuthPlugin[]
 				// session it created is on the context, so turn it into a real cookie.
 				id: 'device-session-cookie',
 				hooks: {
+					before: [
+						{
+							matcher: (ctx) => ctx.path === '/device/code',
+							handler: createAuthMiddleware(async (ctx) => {
+								// /device/code takes no session, and its body accepts an
+								// optional user_id that pre-binds the new code to that
+								// account. This app never sends one — /link asks for a code
+								// for whoever ends up approving it — so an anonymous caller
+								// supplying it is only ever aiming a linking request at
+								// somebody else. Refuse rather than carry the surface.
+								if (ctx.body && 'user_id' in ctx.body) {
+									throw new APIError('BAD_REQUEST', {
+										error: 'invalid_request',
+										error_description: 'user_id is not accepted'
+									});
+								}
+							})
+						}
+					],
 					after: [
 						{
 							matcher: (ctx) => ctx.path === '/device/token',
