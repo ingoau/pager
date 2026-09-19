@@ -42,6 +42,15 @@ Sessions last 400 days and slide forward on use, which is as close to
 indefinite as is achievable — the limit is the browser, not better-auth, since
 Chrome clamps cookie lifetimes to 400 days.
 
+A session is served from a signed cookie for up to a minute rather than being
+looked up in the database on every request, which matters a lot when the
+database is a region away. Anything that acts on that session — sending a page,
+any admin action, managing your own passkeys and sessions — and the admin panel
+itself read it fresh, so revoking a session or rejecting a user takes effect
+immediately on everything that matters. The staleness is confined to ordinary
+page views: for up to a minute a revoked user may still see a page, but cannot
+send one.
+
 > **Register immediately after deploying.** Since the first registration claims
 > admin, anyone who finds the URL before you do would become the admin. The
 > window closes as soon as you register.
