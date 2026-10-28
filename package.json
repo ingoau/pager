@@ -47,9 +47,9 @@
 		"vite": "^8.3.0"
 	},
 	"dependencies": {
-		"@better-auth/passkey": "^1.7.5",
+		"@better-auth/passkey": "^1.7.14",
 		"@types/pg": "^8.23.1",
-		"better-auth": "^1.7.5",
+		"better-auth": "^1.7.14",
 		"mode-watcher": "^1.1.0",
 		"pg": "^8.23.0"
 	}
