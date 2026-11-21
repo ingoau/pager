@@ -1,4 +1,4 @@
-import { PAGERDUTY_FROM, PAGERDUTY_KEY, PAGERDUTY_SERVICE } from '$env/static/private';
+import { PAGERDUTY_FROM, PAGERDUTY_KEY, PAGERDUTY_SERVICE } from '$app/env/private';
 
 export type Urgency = 'low' | 'high';
 
