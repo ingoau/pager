@@ -1,5 +1,5 @@
 import { getRequestEvent } from '$app/server';
-import { BETTER_AUTH_SECRET, BETTER_AUTH_URL, DATABASE_URL } from '$env/static/private';
+import { BETTER_AUTH_SECRET, BETTER_AUTH_URL, DATABASE_URL } from '$app/env/private';
 import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { createAuthOptions } from './server/auth-options';
